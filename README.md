@@ -32,6 +32,58 @@ Projek ini mengusulkan solusi pendeteksian citra sintetis berbasis **Deep Learni
 
 ---
 
+## 🔬 Metodologi, Varian Arsitektur, & Konfigurasi Optimizer
+
+Penelitian ini membandingkan kemampuan representasi fitur citra wajah sintetis berbasis **Transfer Learning CNN EfficientNet** di bawah berbagai skala kompleksitas arsitektur dan algoritma optimasi:
+
+### 1. Arsitektur Deep Learning: EfficientNet
+**EfficientNet** dipilih karena menggunakan metode penskalaan gabungan (*Compound Scaling Method*). Tidak seperti arsitektur konvensional (seperti ResNet atau VGG) yang hanya memperbesar satu dimensi (kedalaman atau resolusi saja), EfficientNet menskalakan tiga dimensi jaringan secara proporsional dan harmonis:
+* **Depth ($d$)**: Jumlah lapisan jaringan untuk menangkap fitur yang lebih abstrak.
+* **Width ($w$)**: Jumlah kanal (*channels*) per lapisan untuk menangkap fitur yang lebih variatif.
+* **Resolution ($r$)**: Ukuran resolusi citra masukan untuk menangkap detail pola spasial yang lebih halus.
+
+Model diinisialisasi menggunakan bobot dasar terlatih (*pre-trained weights*) dari **ImageNet** sebagai *feature extractor*, kemudian lapisan atas (*top classifier head*) disesuaikan untuk klasifikasi biner citra wajah:
+$$\text{Input Image} \rightarrow \text{Backbone EfficientNet} \rightarrow \text{GlobalAveragePooling2D} \rightarrow \text{Dense}(256, \text{ReLU}) \rightarrow \text{BatchNorm} \rightarrow \text{Dropout}(0.5) \rightarrow \text{Dense}(2, \text{Softmax})$$
+
+---
+
+### 2. Tiga Varian Skala EfficientNet yang Diuji
+
+| Varian Arsitektur | Resolusi Input | Jumlah Parameter | Karakteristik & Peran dalam Penelitian |
+| :--- | :---: | :---: | :--- |
+| **EfficientNet-B0** | $224 \times 224 \times 3$ | **~5.3 Juta** | **Model Ringan (Baseline)**: Menjadi fondasi dasar pengujian dengan beban komputasi terendah. Sangat cepat dalam proses pelatihan dan inferensi, cocok untuk penerapan pada perangkat berdaya komputasi terbatas (*edge device*). |
+| **EfficientNet-B3** | $300 \times 300 \times 3$ | **~12 Juta** | **Model Skala Menengah**: Menawarkan *trade-off* optimal antara kompleksitas komputasi dan ketajaman fitur visual citra wajah pada resolusi sedang. |
+| **EfficientNet-B7** | $600 \times 600 \times 3$ | **~66 Juta** | **Model Skala Berat (High Capacity)**: Varian terbesar yang dievaluasi dengan resolusi tinggi $600\times600$ piksel. Mampu menangkap artefak mikro yang sangat halus (seperti ketidakteraturan batas iris mata, tekstur pori sintetis, dan gradasi pencahayaan GAN/Diffusion). Terbukti menghasilkan akurasi tertinggi hingga **98.95%**. |
+
+---
+
+### 3. Empat Algoritma Optimasi (Optimizer) yang Dikomparasikan
+
+Setiap varian model dilatih menggunakan 4 algoritma optimasi yang berbeda untuk menguji kecepatan konvergensi, kestabilan fungsi *loss*, dan daya generalisasi:
+
+1. **Baseline (RMSprop)**  
+   * **Konsep**: Algoritma optimasi adaptif standar bawaan yang direkomendasikan pada paper orisinal EfficientNet (Tan & Le).
+   * **Mekanisme**: Membagi *gradient* dengan rata-rata bergerak eksponensial (*exponential moving average*) dari kuadrat gradien untuk meredam osilasi pada dimensi yang curam.
+2. **SGD (Stochastic Gradient Descent dengan Momentum)**  
+   * **Konsep**: Algoritma optimasi klasik berbasis momentum yang sering dikenal memiliki sifat generalisasi yang sangat baik pada data tak terlihat (*unseen data*).
+   * **Mekanisme**: Mengakumulasikan vektor gradien dari iterasi sebelumnya untuk meluncur melewati daerah lembah lokal (*local minima*) dan menuju minimum kurva yang lebih datar (*flat minima*).
+3. **Adam (Adaptive Moment Estimation)**  
+   * **Konsep**: Salah satu optimizer paling populer dalam computer vision yang menggabungkan keunggulan momentum dan RMSprop.
+   * **Mekanisme**: Menghitung estimasi rata-rata momen pertama (mean) dan momen kedua (uncentered variance) dari gradien secara adaptif untuk mempercepat proses konvergensi.
+4. **AdamW (Adam with Decoupled Weight Decay)**  
+   * **Konsep**: Versi perbaikan modern dari Adam yang memisahkan (*decouples*) penalti pembobotan (*L2 regularization / weight decay*) dari proses pembaruan gradien adaptif.
+   * **Mekanisme**: Pada Adam standar, regularisasi L2 sering terdistorsi oleh penskalaan gradien historis. AdamW memperbaiki kalkulasi ini sehingga regularisasi bobot berjalan efektif, mencegah fenomena overfitting, dan secara konsisten memberikan akurasi tertinggi di semua varian (B0, B3, B7).
+
+---
+
+### 4. Skema Validasi (K-Fold) & Ensemble Learning
+* **5-Fold Stratified Cross Validation**: Dataset dibagi menjadi 5 bagian (*folds*) dengan distribusi kelas Asli dan AI yang seimbang. Setiap fold dirotasi sebagai data validasi sementara 4 fold lainnya menjadi data latih untuk memastikan model tidak mengalami *overfitting* atau *data bias*.
+* **5-Fold Soft-Voting Ensemble**: Seluruh 5 model hasil pelatihan fold digabungkan saat proses pengujian. Prediksi akhir diambil berdasarkan rata-rata probabilitas (*mean probability averaging*):
+  $$P_{\text{ensemble}}(y=c \mid x) = \frac{1}{K} \sum_{k=1}^{K} P_k(y=c \mid x)$$
+  Skema ensemble ini secara terbukti empiris mendongkrak akurasi hingga **+1.70%** lebih tinggi dibandingkan model tunggal (*single fold*).
+
+---
+
 ## 📐 Arsitektur Sistem & Rancangan Alur
 
 ### 1. Blok Diagram Sistem

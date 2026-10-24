@@ -1,0 +1,13 @@
+Skenario Model,Akurasi Single Fold (%),Akurasi 5-Fold Ensemble (%),Selisih Akurasi (%),Status Performa,Single Fold (TN/FP/FN/TP),5-Fold Ensemble (TN/FP/FN/TP),Waktu Single (s),Waktu Ensemble (s)
+EfficientNet-B0 + Baseline (RMSprop),53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.70s,8.50s
+EfficientNet-B0 + Adam,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.14s,5.70s
+EfficientNet-B0 + SGD,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.13s,5.65s
+EfficientNet-B0 + AdamW,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.12s,5.60s
+EfficientNet-B3 + Baseline (RMSprop),53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.69s,8.45s
+EfficientNet-B3 + Adam,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.64s,8.20s
+EfficientNet-B3 + SGD,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.65s,8.25s
+EfficientNet-B3 + AdamW,53.33%,53.33%,+0.00%,SAMA,0/7/0/8,0/7/0/8,1.64s,8.20s
+EfficientNet-B7 + Baseline (RMSprop),60.00%,66.67%,+6.67%,NAIK,1/6/0/8,2/5/0/8,6.90s,34.50s
+EfficientNet-B7 + Adam,40.00%,53.33%,+13.33%,NAIK,3/4/5/3,4/3/4/4,6.93s,34.65s
+EfficientNet-B7 + SGD,46.67%,73.33%,+26.67%,NAIK,1/6/2/6,5/2/2/6,6.91s,34.55s
+EfficientNet-B7 + AdamW,20.00%,46.67%,+26.67%,NAIK,1/6/6/2,4/3/5/3,6.95s,34.75s

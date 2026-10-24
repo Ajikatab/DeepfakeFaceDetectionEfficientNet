@@ -1,0 +1,6 @@
+Fold,Akurasi (%),Precision (%),Recall (%),F1-Score (%),Waktu
+Fold 1,95.25%,95.30%,95.25%,95.25%,Selesai Sebelumnya
+Fold 2,94.94%,95.09%,94.94%,94.93%,Selesai Sebelumnya
+Fold 3,94.62%,94.65%,94.62%,94.62%,1:52:08
+Fold 4,94.25%,94.45%,94.25%,94.24%,1:56:23
+Fold 5,94.69%,94.84%,94.69%,94.68%,1:27:40

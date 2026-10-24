@@ -1,0 +1,45 @@
+# ==========================================
+# Python & Environment
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ==========================================
+# Large Datasets (Images)
+# ==========================================
+dataset/
+preprocessed_dataset/
+real-vs-fake/
+test/
+DATASET PRIMER FOTO ASLI/
+error_analysis/
+*.zip
+
+# ==========================================
+# Deep Learning Model Weights & Binaries
+# (Files exceeding GitHub 100MB limit)
+# ==========================================
+*.h5
+*.weights.h5
+*.keras
+drive-download*
+
+# ==========================================
+# Local Scratch & Maintenance Scripts
+# ==========================================
+scratch/
+helpers/
+panduan_sidang_ta.md
+
+# ==========================================
+# System & IDE Files
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

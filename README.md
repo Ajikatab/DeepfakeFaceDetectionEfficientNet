@@ -20,7 +20,6 @@ Projek ini mengusulkan solusi pendeteksian citra sintetis berbasis **Deep Learni
 - **Komparasi Optimizer**: Evaluasi komparatif 4 algoritma optimasi: **Baseline (RMSprop)**, **SGD**, **Adam**, dan **AdamW**.
 - **Validasi Ketat**: Penerapan **5-Fold Cross Validation** untuk memastikan model bebas dari *data leakage* dan memiliki daya generalisasi yang tinggi.
 - **Skema Ensemble**: Penggabungan bobot model 5-Fold Ensemble (*Soft-Voting Probability Averaging*) untuk memitigasi variansi prediksi.
-- **Explainable AI (Grad-CAM)**: Visualisasi area fitur kritis yang diperhatikan model saat membedakan wajah asli dan wajah AI.
 - **Implementasi GUI**: Aplikasi antarmuka pengguna berbasis **Streamlit** untuk pengujian inferensi citra secara langsung (*real-time*).
 
 ---
@@ -33,67 +32,38 @@ Projek ini mengusulkan solusi pendeteksian citra sintetis berbasis **Deep Learni
 
 ---
 
-## 📐 Perancangan Sistem & Alur Kerja
+## 📐 Arsitektur Sistem & Rancangan Alur
 
 ### 1. Blok Diagram Sistem
-Blok diagram berikut menggambarkan tahapan pemrosesan data dari input hingga klasifikasi:
+Blok diagram berikut mengilustrasikan alur pemrosesan data secara komprehensif mulai dari dataset input citra wajah, proses prapemrosesan (resizing sesuai resolusi native backbone, normalisasi piksel), tahap Transfer Learning fitur konvolusional EfficientNet, lapisan dense classifier dengan regularisasi Batch Normalization & Dropout, hingga proses prediksi probabilitas biner (Asli vs AI) menggunakan fungsi aktivasi Softmax.
 
-![Blok Diagram Sistem](blok_diagram_ta.png)
+![Blok Diagram Sistem](<Blok Diagram TA.drawio (9).png>)
 
-> **Penjelasan Alur Sistem:**
-> 1. **Data Input**: Sistem menerima masukan citra wajah (baik foto asli manusia maupun citra buatan generator AI).
-> 2. **Prapemrosesan (Preprocessing)**: Citra diseragamkan resolusinya sesuai dimensi input backbone (*224x224* untuk B0, *300x300* untuk B3, dan *600x600* untuk B7) serta dilakukan normalisasi nilai piksel ke rentang `[0, 1]`.
-> 3. **Ekstraksi Fitur (Backbone EfficientNet)**: Citra diproses melalui blok *MBConv (Inverted Residual Blocks)* dengan mekanisme *Squeeze-and-Excitation* untuk menangkap representasi fitur visual tingkat rendah hingga tinggi.
-> 4. **Klasifikasi (Dense Head)**: Menggunakan *Global Average Pooling 2D*, diikuti *Dense Layer (256 neuron)* dengan fungsi aktivasi ReLU, *Batch Normalization*, serta *Dropout (0.5)* untuk mencegah *overfitting*.
-> 5. **Output**: Lapisan *Dense (2 neuron)* dengan aktivasi Softmax menghasilkan estimasi probabilitas akhir: **Asli (Real)** atau **AI (Fake)**.
+> **Penjelasan Alur Blok Diagram:**
+> 1. **Input Citra**: Citra wajah berformat RGB dimasukkan ke dalam sistem.
+> 2. **Preprocessing**: Citra diubah ukurannya (*resizing*) sesuai arsitektur (224x224 untuk B0, 300x300 untuk B3, dan 600x600 untuk B7) serta dinormalisasi ke rentang [0, 1].
+> 3. **Feature Extractor Backbone**: Menggunakan arsitektur Convolutional Neural Network (CNN) EfficientNet pretrained ImageNet untuk mengekstraksi hierarki representasi fitur visual.
+> 4. **Classification Head**: Global Average Pooling 2D diikuti Dense layer (256 neuron, ReLU), Batch Normalization, dan Dropout 0.5 untuk mencegah overfitting.
+> 5. **Output Klasifikasi**: Lapisan Dense (2 neuron, Softmax) menghasilkan probabilitas kelas akhir: `Asli (Real)` atau `AI (Generated)`.
 
 ---
 
-### 2. Use Case Diagram Sistem
-Diagram *Use Case* berikut menggambarkan fungsionalitas dan interaksi antara pengguna dengan aplikasi:
+### 2. Use Case Diagram Aplikasi
+Diagram ini menggambarkan fungsionalitas sistem dari sudut pandang interaksi pengguna (*User*) terhadap sistem aplikasi pengujian deteksi citra.
 
-![Use Case Diagram](use_case_diagram.png)
+![Use Case Diagram Aplikasi](<USE CASE DIAGRAM.drawio (1).png>)
 
 > **Penjelasan Use Case:**
-> - **Unggah Citra**: Pengguna dapat memasukkan satu atau beberapa citra wajah melalui antarmuka web.
-> - **Pemilihan Model & Konfigurasi**: Pengguna dapat memilih varian model (EfficientNet-B0, B3, atau B7) serta optimizer terbaik untuk pengujian.
-> - **Proses Inferensi**: Sistem menjalankan komputasi prediksi secara otomatis.
-> - **Visualisasi Hasil**: Sistem menampilkan label klasifikasi, persentase tingkat keyakinan (*confidence score*), waktu komputasi, dan rincian probabilitas masing-masing kelas.
+> - **Unggah Citra**: Pengguna dapat memasukkan berkas foto wajah tunggal maupun batch yang ingin dianalisis ke dalam antarmuka.
+> - **Pemilihan Skenario Model & Optimizer**: Pengguna dapat memilih varian EfficientNet (B0, B3, atau B7) serta optimizer yang digunakan (AdamW, Adam, SGD, Baseline).
+> - **Eksekusi Deteksi**: Sistem menjalankan inferensi komputasi citra secara otomatis.
+> - **Penyajian Hasil & Metrik**: Antarmuka menampilkan label prediksi (`Asli` atau `AI`), persentase tingkat keyakinan (*confidence level*), waktu respon inferensi, dan visualisasi distribusi probabilitas.
 
 ---
 
-## 📊 Analisis Kinerja & Hasil Evaluasi
+## 📊 Hasil Evaluasi Komparatif & Visualisasi Eksperimen
 
-### 1. Tren Akurasi Test Set pada 5-Fold Cross Validation
-Grafik berikut menampilkan stabilitas performa pengujian model di setiap fold (*Fold 1 sampai Fold 5*) pada 2.000 citra test set independen:
-
-![Tren Akurasi Test Set K-Fold](trend_akurasi_test_set_kfold.png)
-
-> **Interpretasi Grafik Tren K-Fold:**
-> - **Stabilitas Generalisasi**: Seluruh varian model menunjukkan garis tren yang stabil di setiap fold, membuktikan bahwa proses pelatihan tidak mengalami *overfitting* atau bias pada pembagian data tertentu.
-> - **Efek Compound Scaling**: Terlihat hierarki performa yang konsisten di mana **EfficientNet-B7** (garis teratas) mengungguli **EfficientNet-B3** dan **EfficientNet-B0** di seluruh lipatan data. Peningkatan kedalaman, lebar jaringan, dan resolusi input pada B7 secara nyata meningkatkan akurasi deteksi pemalsuan wajah.
-
----
-
-### 2. Best Confusion Matrix (B0, B3, B7)
-Berikut adalah matriks konfusi performa terbaik (*Best Fold dengan Optimizer AdamW*) untuk masing-masing varian arsitektur:
-
-| **EfficientNet-B0 (AdamW)** | **EfficientNet-B3 (AdamW)** | **EfficientNet-B7 (AdamW)** |
-| :---: | :---: | :---: |
-| ![CM B0 AdamW](B0/confusion_matrix_adamw_kfold.png) | ![CM B3 AdamW](B3/confusion_matrix_adamw_kfold.png) | ![CM B7 AdamW](B7/confusion_matrix_adamw_kfold.png) |
-
-> **Interpretasi Confusion Matrix:**
-> - **True Positive (TP) & True Negative (TN)**: Menunjukkan kemampuan model dalam mengklasifikasikan citra Asli dan citra AI dengan tepat.
-> - **Reduksi Kesalahan (False Positive & False Negative)**:
->   - Pada **EfficientNet-B0**, model sudah mampu mendeteksi sebagian besar sampel dengan baik, namun masih terdapat sedikit kesalahan klasifikasi pada citra AI dengan pencahayaan ekstrem.
->   - Seiring bertambahnya skala arsitektur ke **EfficientNet-B3** dan **EfficientNet-B7**, jumlah kesalahan klasifikasi (*FP & FN*) berkurang secara signifikan.
->   - Pada **EfficientNet-B7 + AdamW**, daerah diagonal utama (prediksi benar) mendominasi secara hampir absolut, dengan tingkat sensitivitas (*recall*) dan presisi mencapai **> 98.9%**.
-
----
-
-### 3. Rekapitulasi Kuantitatif (Single Fold vs 5-Fold Ensemble)
-
-Uji coba dilakukan pada **2.000 citra test set independen** (1.000 Asli : 1.000 AI):
+Berikut adalah rekapitulasi performa model yang diuji pada **2.000 citra test set independen** (1.000 Asli : 1.000 AI):
 
 | Arsitektur Backbone | Optimizer | Akurasi Single Best Fold (%) | Akurasi 5-Fold Ensemble (%) | Peningkatan Akurasi | F1-Score Ensemble (%) |
 | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -112,15 +82,40 @@ Uji coba dilakukan pada **2.000 citra test set independen** (1.000 Asli : 1.000 
 
 ---
 
-## 🔍 Visual Explainability (Grad-CAM)
+### 1. Tren Akurasi Rata-rata 5-Fold Cross Validation
+Grafik ini memperlihatkan tren stabilitas dan kemampuan generalisasi rata-rata 5-Fold Cross Validation di seluruh skala arsitektur terhadap 4 optimizer pada test set independen.
 
-Untuk memahami dasar pengambilan keputusan model konvolusional secara transparan, diterapkan metode **Grad-CAM (Gradient-weighted Class Activation Mapping)**:
+![Tren Akurasi Rata-rata K-Fold](trend_akurasi_test_set_kfold.png)
 
-![Grad-CAM Sample AI](B0/gradcam_sample_ai.png)
+> **Interpretasi Tren Akurasi K-Fold:**
+> - Terlihat pola kenaikan akurasi yang konsisten seiring bertambahnya kedalaman dan kapasitas parameter model dari **EfficientNet-B0 (5.3M parameter)**, **B3 (12M parameter)**, hingga **B7 (66M parameter)**.
+> - Optimizer adaptif modern dengan penanganan weight decay terpisah (**AdamW**) dan **Adam** secara konsisten menghasilkan akurasi yang lebih tinggi dan konvergen lebih stabil dibandingkan optimasi SGD konvensional maupun Baseline RMSprop.
 
-> **Interpretasi Visual Explainability (Grad-CAM):**
-> - **Daerah Perhatian Spasial**: Warna merah-kuning pada *heatmap* menunjukkan area piksel yang paling berkontribusi terhadap aktivasi kelas AI.
-> - **Fokus Fitur**: Model terbukti tidak sekadar menghafal latar belakang (*background*), melainkan secara aktif memeriksa artefak mikro pada tekstur kulit sintetis, batas tepi bola mata, bibir, serta distorsi pola rambut yang merupakan ciri khas generator wajah berbasis AI.
+---
+
+### 2. Matriks Konfusi (Confusion Matrix) Model Terbaik per Varian
+Berikut adalah matriks konfusi pengujian 2.000 citra test set menggunakan konfigurasi optimizer terbaik (**AdamW**) untuk masing-masing varian arsitektur:
+
+| EfficientNet-B0 (AdamW) | EfficientNet-B3 (AdamW) | EfficientNet-B7 (AdamW) |
+| :---: | :---: | :---: |
+| ![CM B0 AdamW](B0/confusion_matrix_adamw_kfold.png) | ![CM B3 AdamW](B3/confusion_matrix_adamw_kfold.png) | ![CM B7 AdamW](B7/confusion_matrix_adamw_kfold.png) |
+
+> **Interpretasi Confusion Matrix:**
+> - **True Negative (TN) & True Positive (TP)**: Menunjukkan kemampuan model dalam mendeteksi citra Asli dan citra buatan AI secara presisi.
+> - **False Positive (FP) & False Negative (FN)**: Kesalahan klasifikasi terbukti mengalami penurunan drastis seiring naiknya tingkatan model:
+>   - Pada **EfficientNet-B0**, model masih memiliki sedikit false prediction karena keterbatasan kapasitas representasi spasial resolusi 224x224.
+>   - Pada **EfficientNet-B3**, resolusi 300x300 menangkap tekstur sintetis wajah dengan lebih tajam sehingga menekan angka kesalahan.
+>   - Pada **EfficientNet-B7** (resolusi 600x600), matriks konfusi menunjukkan tingkat akurasi klasifikasi hampir sempurna, meminimalkan false alarm baik pada citra sintetis maupun foto asli.
+
+---
+
+### 3. Visual Explainability (Interpretabilitas Model Menggunakan Grad-CAM)
+Untuk memastikan model tidak membuat keputusan secara *black-box*, metode **Gradient-weighted Class Activation Mapping (Grad-CAM)** diterapkan untuk memvisualisasikan area piksel penting yang menjadi dasar pertimbangan neural network.
+
+![Grad-CAM Visualisasi Citra AI](B0/gradcam_sample_ai.png)
+
+> **Interpretasi Grad-CAM:**
+> - Peta panas (*heatmap*) berwarna merah-kuning menunjukkan area atensi tertinggi di mana model mendeteksi ketidakwajaran visual (*synthetic artifacts*), seperti kehalusan tekstur kulit sintetis yang tidak alami, pencahayaan ireguler pada area mata dan hidung, serta batas transisi rambut yang khas dihasilkan oleh model difusi atau generator wajah AI.
 
 ---
 
@@ -131,7 +126,7 @@ Untuk memahami dasar pengambilan keputusan model konvolusional secara transparan
 │   ├── efficientnet_b0_kfold.ipynb    # Notebook pelatihan utama B0
 │   ├── history_*.json                 # Riwayat loss & akurasi training per fold
 │   ├── training_log_*.csv             # Log metrik epoch
-│   └── confusion_matrix_*.png         # Matriks konfusi B0
+│   └── *.png                          # Visualisasi & matriks konfusi B0
 ├── B3/                                # Eksperimen & Notebook K-Fold EfficientNet-B3
 │   ├── efficientnet_b3_kfold.ipynb    # Notebook pelatihan utama B3
 │   └── ...
@@ -144,9 +139,9 @@ Untuk memahami dasar pengambilan keputusan model konvolusional secara transparan
 ├── sample_test_images/                # Sampel citra pengujian siap pakai (~7 MB)
 │   ├── AI/                            # 5 contoh citra wajah buatan AI
 │   └── Asli/                          # 5 contoh citra wajah foto asli
-├── blok_diagram_ta.png                # Blok diagram alur kerja sistem
-├── use_case_diagram.png               # Use case diagram sistem
-├── trend_akurasi_test_set_kfold.png   # Grafik tren evaluasi K-Fold
+├── Blok Diagram TA.drawio (9).png     # Blok diagram arsitektur sistem
+├── USE CASE DIAGRAM.drawio (1).png    # Use case diagram aplikasi
+├── trend_akurasi_test_set_kfold.png   # Grafik tren akurasi K-Fold
 ├── eval_all_3_scenarios.py            # Script evaluasi lengkap 3 skenario
 ├── evaluation_results.json            # Ringkasan metrik akurasi numerik
 ├── fast_eval_3_scenarios.py           # Script evaluasi cepat skenario
